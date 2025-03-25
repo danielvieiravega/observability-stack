@@ -9,7 +9,7 @@ A complete local monitoring solution with real-time metrics (Aspire Dashboard), 
 
 ## ⚙️ Initial Setup
 ```bash
-git clone git@github.com:danielvieiravega/observability-stack.git
+git clone https://github.com/danielvieiravega/observability-stack.git
 cd observability-stack
 docker-compose up -d
 ```
