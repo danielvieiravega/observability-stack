@@ -1,0 +1,99 @@
+﻿services:
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.0
+    container_name: aspire-dashboard
+    ports:
+      - "18888:18888"
+      - "18889:18889"
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: true
+    networks:
+      - observability
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: mimir
+      MINIO_ROOT_PASSWORD: supersecret
+    volumes:
+      - minio_data:/data
+    networks:
+      - observability
+
+  mimir:
+    image: grafana/mimir:latest
+    command: [
+      "-target=all",
+      "-config.file=/etc/mimir/mimir.yaml"
+    ]
+    ports:
+      - "9009:9009"
+      - "9095:9095"
+      - "8080:8080"
+    volumes:
+      - ./mimir-config.yaml:/etc/mimir/mimir.yaml
+    depends_on:
+      - minio
+    networks:
+      - observability
+
+  # Adicione este serviço para criar os buckets automaticamente
+  minio-setup:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set mimir http://minio:9000 mimir supersecret) do echo 'Waiting for minio...' && sleep 1; done;
+      /usr/bin/mc mb mimir/mimir;
+      /usr/bin/mc mb mimir/mimir-alerts;
+      exit 0
+      "
+    networks:
+      - observability
+
+  # Grafana (Visualization)
+  grafana:
+    image: grafana/grafana-enterprise:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    depends_on:
+      - mimir
+    networks:
+      - observability
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      #- "8889:8889"   # Metrics
+    depends_on:
+      - mimir
+      - aspire-dashboard
+    networks:
+      - observability
+
+networks:
+  observability:
+    driver: bridge
+
+volumes:
+  grafana_data:
+  minio_data:

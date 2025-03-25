@@ -1,0 +1,41 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  otlp/aspire:
+    endpoint: "aspire-dashboard:18889"
+    tls:
+      insecure: true
+
+  prometheusremotewrite:
+    endpoint: "http://mimir:9009/api/v1/push"
+    # Configuração mínima para ambiente local
+    headers:
+      "X-Scope-OrgID": "demo"
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1000
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/aspire, prometheusremotewrite]
+    
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/aspire]
+    
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/aspire]
