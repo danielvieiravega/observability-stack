@@ -104,19 +104,6 @@ graph TD
     end
 ```
 
-## 🔍 Troubleshooting
-**Metrics not appearing?**
-```bash
-curl http://localhost:9009/prometheus/api/v1/labels
-docker-compose logs otel-collector
-```
-
-**Aspire Dashboard empty?**
-```bash
-curl http://localhost:18889/health
-docker-compose exec otel-collector curl localhost:13133
-```
-
 ## ⚠️ Important Notes
 - Default credentials are for local use only
 - Add TLS for production environments
