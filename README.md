@@ -17,7 +17,7 @@ docker-compose up -d
 ## 🌐 Services Overview
 | Service               | Endpoint                     | Credentials         | Purpose                      |
 |-----------------------|------------------------------|---------------------|------------------------------|
-| Aspire Dashboard      | http://localhost:18889       | Open access         | Real-time metrics & traces   |
+| Aspire Dashboard      | http://localhost:18888       | Open access         | Real-time metrics & traces   |
 | Grafana               | http://localhost:3000        | admin/admin         | Historical dashboards        |
 | Mimir (Prometheus)    | http://localhost:9009        | -                   | Metrics storage              |
 | MinIO                 | http://localhost:9001        | mimir/supersecret   | Persistent storage           |
